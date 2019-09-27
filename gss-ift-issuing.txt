@@ -1,0 +1,489 @@
+
+#国际机票出票
+# 查询资金账号，在创建采购收款单时，需要传入 CapitalAccountNo支付账号，PayWayCode支付方式代码【支付方式】
+[2019-09-23 15:59:55.481][INFO ][http-nio-8479-exec-1][com.tempus.gss.product.ift.service.OrderServiceImpl][?.()] - 出单开始PassengerListVo:PassengerListVo{supplierNo=411805170138410133, ticketType='null', pnr='fef543', pnrNo=null, bigPnr='null', rows=null, pVoList=[PassengerVo{passengerNo=1176036385044312064, id=null, owner=null, saleOrderNo=1176036384889122816, saleOrderDetailNo=null, passengerType='null', surname='null', name='null', certType='null', certNo='null', nationality='null', gender='null', ticketConfig='null', ticketAirline='null', ticketNo='null', ticketType='null', buyFare=2210.00, buyTax=320.00, saleRest=null, buyRest=null, countPrice=null, buyCountPrice=null, salePrice=null, buyPrice=2530.00, brokerage=null, buyAgencyFee=0.00, buyRebate=0.00, buyAwardPrice=2210.00, saleFareTax='null', buyFareTax='null', saleTax=null, saleBrokerage=null, buyBrokerage=0.00, saleAgencyFeeRebate='null', buyAgencyFeeRebate='null', saleAwardPrice=null, modifier='null', status='null', modifyTime=null, valid=null, createTime=null, certValid=null, detailList=[com.tempus.gss.product.ift.api.entity.vo.SaleOrderDetailVo@41ae2096, com.tempus.gss.product.ift.api.entity.vo.SaleOrderDetailVo@5aa30860], creator='null', legValue='null', supplierNo=null, saleAirlineCount=null, buyAirlineCount=null, accountList=null, saleAgencyFee=null, saleRebate=null, exchangeRate=null, currency=null}], accountNo=809683098651348992, dealNo='null', buyRemarke='', office=''} 
+ Time：3 ms - ID：com.tempus.gss.pay.dao.CapitalAccountMapper.selectOne
+ Execute SQL：SELECT id,capital_account_no AS capitalAccountNo,account AS account,account_name AS accountName,account_type AS accountType,pay_way_code AS payWayCode,pay_category_code AS payCategoryCode,is_payment_account AS isPaymentAccount,is_receivable_account AS isReceivableAccount,valid AS valid,creator AS creator,create_time AS createTime,modifier AS modifier,modify_time AS modifyTime,remark AS remark,owner AS owner,rate AS rate FROM PS_CAPITAL_ACCOUNT WHERE capital_account_no=809683098651348992 AND valid=true AND owner=8755
+
+#查询供应商 在创建采购收款单时，需要传入 SupplierNo供应商编号，CustomerTypeNo客户类型编号
+[2019-09-23 16:00:14.622][INFO ][http-nio-8479-exec-9][com.tempus.gss.cps.service.SupplierServiceImpl][?.()] - 根据客户编号查询供应商信息 -------------------------进入 
+ Time：4 ms - ID：com.tempus.gss.cps.dao.SupplierMapper.getSupplierByNo
+ Execute SQL：SELECT T.ID, T.SUPPLIER_NO AS supplierNo, T.GROUP_NO AS groupNo, T.CUSTOMER_TYPE_NO AS customerTypeNo, T.PRODUCT_TYPE AS productType, T.TYPE, T.NAME, T.SHORT_NAME AS shortName, T.LICENSE_NUMBER AS licenseNumber, T.LEGAL_PERSON AS legalPerson, T.CONTACTOR, T.CARD_NO AS cardNo, T.OFFICE_NO AS officeNo, T.PHONE, T.EMAIL, T.FAX, T.TEL, T.QQ, T.ADDRESS, T.GRADE, T.DEVELOPER, T.SOURCE, T.STATUS, T.IS_OPEN AS isOpen, T.OWNER, T.VALID, T.EXPIRED_DATE AS expiredDate, T.CREATER, T.CREATE_TIME AS createTime, T.MODIFIER, T.MODIFY_TIME AS modifyTime, T.BANK_NAME AS bankName, T.BANK_ADDRESS AS bankAddress, T.ACCOUNT_NAME AS accountName, T.ACCOUNT_NO AS accountNo, T.CONTRACT_ID AS contractId, T.CARD_ID AS cardId, T.CARD_ID2 AS cardId2, T.URGENT_CONTACTOR AS urgentContactor, T.URGENT_PHONE AS urgentPhone, T.SIGN_CORPORATION AS signCorporation, T.BALANCE_CORPORATION AS balanceCorporation, T.OWNER_AREA AS ownerArea, T.REMARK, T.EXTEND1, T.EXTEND2, T.EXTEND3, CT.NAME AS ctName FROM CPS_SUPPLIER T LEFT JOIN CPS_CUSTOMER_TYPE CT ON(T.CUSTOMER_TYPE_NO = CT.CUSTOMER_TYPE_NO) WHERE T.SUPPLIER_NO = 411805170138410133 ORDER BY T.CREATE_TIME DESC LIMIT 1
+
+# 根据销售单号查询 所有采购单  取[0],在创建采购收款单时，需要传入payable应付,buyOrderNo 采购单ID
+[2019-09-23 16:00:14.626][INFO ][http-nio-8479-exec-9][com.tempus.gss.cps.service.SupplierServiceImpl][?.()] - 根据客户编号查询供应商信息成功 ------------------------- 
+ Time：3 ms - ID：com.tempus.gss.order.dao.BuyOrderMapper.selectList
+EXECUTE SQL：SELECT BUY_ORDER_NO AS buyOrderNo,
+ OWNER AS OWNER,
+ sale_order_no AS saleOrderNo,
+ bsign_type AS bsignType,
+ business_sign_no AS businessSignNo,
+ buy_channel_no AS buyChannelNo,
+ dept_code AS deptCode,
+ supplier_type_no AS supplierTypeNo,
+ supplier_no AS supplierNo,
+ buy_change_type AS buyChangeType,
+ goods_type AS goodsType,
+ goods_sub_type AS goodsSubType,
+ goods_name AS goodsName,
+ buyer AS buyer,
+ pcount AS pcount,
+ payable AS payable,
+ payment AS payment,
+ saleorder_price AS saleorderPrice,
+ buying_time AS buyingTime,
+ pay_status AS payStatus,
+ buy_status AS buyStatus,
+ buy_child_status AS buyChildStatus,
+ modify_time AS modifyTime,
+ modifier AS modifier,
+ valid AS valid,
+ have_difference AS haveDifference,
+ difference_total_amount AS differenceTotalAmount,
+ transation_order_no AS transationOrderNo
+FROM
+	OS_BUYORDER
+WHERE
+	sale_order_no = 1176036384889122816
+AND valid = 1
+ORDER BY
+	BUYING_TIME DESC
+/* 创建采购付款单时，传入 dealNo交易流水号 【第三方支付流水 】，3：支付类型（1 在线支付 2 帐期或代付 3 线下支付）
+			线下支付的第三方业务编号不能为空
+			(转换业务单信息(转换格式:业务单号+"_"+业务单类型)，交易单 BusinessOrderInfo 转换为销售采购)
+			(验证业务单的结算状态是否为未结算)
+			根据传入的单号列表返回对应单子的应收付金额（减去实收付）列表
+			//创建收付款单、创建实收记录、修改业务单信息和状态、修改扩展表
+*/	
+- 调用创建采购付款单服务开始--->参数为：CertificateCreateVO:{ "orderInfoList":"[BusinessOrderInfo [recordNo=1176036385115615232, businessType=3, actualAmount=2530]]","payWay":"1000001","payType":"3","accoutNo":"809683098651348992","serviceLine":"1","channel":"BUY","ticketNos":"","customerTypeNo":"104","incomeExpenseType":"2","customerNo":"411805170138410133","subBusinessType":"1","reason":"采购单付款信息","thirdPayNo":"","thirdBusNo":"1176036385115615232 ","amount":null,"settlementNo":"","paymentAccount":"","receivableAccount":"","isWithHold":"false","payNo":"","pnr":"","transationOrderNo":"","saleOrderNo":"","specialType":null} 
+- 转换业务单信息。。。。。。 
+- 创建采购付款单--->验证类型为:3的业务单:1176036385115615232的结算状态是否为未结算! 
+ 
+
+
+#(验证业务单的结算状态是否为未结算) SettlementStatus//结算状态 1.未结算 2.已结算 3.已审核
+Time：115 ms - ID：com.tempus.gss.order.dao.BuyOrderExtendMapper.selectById
+ Execute SQL：SELECT BUY_ORDER_NO AS buyOrderNo,external_number AS externalNumber,settlement_status AS settlementStatus,match_status AS matchStatus,check_way AS checkWay,check_result AS checkResult,clearance_status AS clearanceStatus,certificate_no AS certificateNo,pay_way AS payWay,third_pay_no AS thirdPayNo,third_bus_no AS thirdBusNo,third_amount AS thirdAmount,profit AS profit,clearance_amount AS clearanceAmount,supplier_type_name AS supplierTypeName,supplier_no_name AS supplierNoName,TICKETNOS AS ticketNos FROM OS_BUYORDER_EXTEND WHERE BUY_ORDER_NO=1176036385115615232
+
+- 根据传入的单号列表获取对应业务单的应收付金额列表。。。。。。 
+- 根据单号获取应收付减实收付后的金额。。。。。。 
+- 采购单getBOrderByBONo()-->buyOrderNo:1176036385115615232 
+ #根据传入的单号列表返回对应单子的应收付金额（减去实收付）列表  
+# 根据单号获取应收付减实收付后的金额。。。。。。 查询了采购单，采购单状态为已支付PayStatus=3/4 ，返回空
+Time：180 ms - ID：com.tempus.gss.order.dao.BuyOrderMapper.selectOne
+ Execute SQL：SELECT BUY_ORDER_NO AS buyOrderNo,owner AS owner,sale_order_no AS saleOrderNo,bsign_type AS bsignType,business_sign_no AS businessSignNo,buy_channel_no AS buyChannelNo,dept_code AS deptCode,supplier_type_no AS supplierTypeNo,supplier_no AS supplierNo,buy_change_type AS buyChangeType,goods_type AS goodsType,goods_sub_type AS goodsSubType,goods_name AS goodsName,buyer AS buyer,pcount AS pcount,payable AS payable,payment AS payment,saleorder_price AS saleorderPrice,buying_time AS buyingTime,pay_status AS payStatus,buy_status AS buyStatus,buy_child_status AS buyChildStatus,modify_time AS modifyTime,modifier AS modifier,valid AS valid,have_difference AS haveDifference,difference_total_amount AS differenceTotalAmount,transation_order_no AS transationOrderNo FROM OS_BUYORDER WHERE BUY_ORDER_NO=1176036385115615232
+
+# 查询应付和实付，计算需要支付的总金额
+- 业务单号查询应收付记录总和开始------> 
+ Time：177 ms - ID：com.tempus.gss.order.dao.PlanAmountRecordMapper.queryPlanAmountByRecordNo
+ Execute SQL：SELECT ID,OWNER,RECORD_NO as recordNo,BUSINESS_TYPE as businessType,INCOME_EXPENSE_TYPE as incomeExpenseType, GOODS_TYPE as goodsType,RECORD_MOVING_TYPE as recordMovingType,SETTLEMENT_NO as settlementNo, PLAN_AMOUNT as planAmount,MOVING_REASON as movingReason, SETTLEMENT_STATUS as settlementStatus,MODIFIER,CREATE_TIME as createTime,MODIFY_TIME as modifyTime,VALID FROM OS_PLANAMOUNTRECORD WHERE VALID=1 AND RECORD_NO=1176066187197427712 AND BUSINESS_TYPE=3
+# 查询应付和实付，计算需要支付的总金额
+- 业务单号查询应收付记录总和结束------>recordNo:1176066187197427712  businessType:3  金额:-2530.00 
+ Time：70 ms - ID：com.tempus.gss.order.dao.ActualAmountRecorMapper.queryActualAmountByRecordNo
+ Execute SQL：( SELECT A.ID, A.OWNER, A.RECORD_NO AS recordNo, A.CERTIFICATE_NO AS certificateNo, A.BUSINESS_TYPE AS businessType, A.INCOME_EXPENSE_TYPE AS incomeExpenseType, A.GOODS_TYPE AS goodsType, A.PAY_TYPE AS payType, A.GOODS_SUB_TYPE AS goodsSubType, A.GOODS_NAME AS goodsName, A.ACTUAL_AMOUNT AS actualAmount, A.AUDIT_STATUS AS auditStatus, A.ACTUAL_STATUS AS actualStatus, A.MOVING_REASON AS movingReason, A.SETTLEMENT_NO AS settlementNo, A.PAY_NO AS payNo, A.SETTLEMENT_STATUS AS settlementStatus, A.REFUND_AMOUNT AS refundAmount, A.MODIFIER, A.CREATE_TIME AS createTime, A.MODIFY_TIME AS modifyTime, A.ARRIVE_ACCOUNT_TIME AS arriveAccountTime, A.VALID, C.PAY_WAY AS payWay, C.CAPITAL_ACCOUNT_NO AS capitalAccountNo, P.NAME AS payWayName FROM OS_ACTUALAMOUNTRECORD A LEFT JOIN OS_CERTIFICATE C ON A.CERTIFICATE_NO = C.CERTIFICATE_NO LEFT JOIN PS_PAY_WAY P ON P.CODE = C.PAY_WAY WHERE A.VALID=1 AND A.RECORD_NO=1176066187197427712 AND A.BUSINESS_TYPE=3 ORDER BY A.CREATE_TIME DESC) UNION ( SELECT A.ID, A.OWNER, A.RECORD_NO AS recordNo, A.CERTIFICATE_NO AS certificateNo, A.BUSINESS_TYPE AS businessType, A.INCOME_EXPENSE_TYPE AS incomeExpenseType, A.GOODS_TYPE AS goodsType, A.PAY_TYPE AS payType, A.GOODS_SUB_TYPE AS goodsSubType, A.GOODS_NAME AS goodsName, A.ACTUAL_AMOUNT AS actualAmount, A.AUDIT_STATUS AS auditStatus, A.ACTUAL_STATUS AS actualStatus, A.MOVING_REASON AS movingReason, A.SETTLEMENT_NO AS settlementNo, A.PAY_NO AS payNo, A.SETTLEMENT_STATUS AS settlementStatus, A.REFUND_AMOUNT AS refundAmount, A.MODIFIER, A.CREATE_TIME AS createTime, A.MODIFY_TIME AS modifyTime, A.ARRIVE_ACCOUNT_TIME AS arriveAccountTime, A.VALID, C.PAY_WAY AS payWay, C.CAPITAL_ACCOUNT_NO AS capitalAccountNo, P.NAME AS payWayName FROM OS_ACTUALAMOUNTRECORD A LEFT JOIN OS_CERTIFICATE C ON A.CERTIFICATE_NO = C.CERTIFICATE_NO LEFT JOIN PS_PAY_WAY P ON P.CODE = C.PAY_WAY LEFT JOIN OS_DIFFERENCE_ORDER D on D.BUSINESS_ORDER_NO=A.RECORD_NO WHERE A.VALID=1 AND D.BUSINESS_ORDER_NO =1176066187197427712 AND A.BUSINESS_TYPE=3 ORDER BY A.CREATE_TIME DESC )
+
+- 创建c、a、修改业务单信息和状态、修改扩展表  setCertificate 开始,参数：amount---0,   CertificateCreateVO:{ "orderInfoList":"[BusinessOrderInfo [recordNo=1176036385115615232, businessType=3, actualAmount=2530]]","payWay":"1000001","payType":"3","accoutNo":"809683098651348992","serviceLine":"1","channel":"BUY","ticketNos":"","customerTypeNo":"104","incomeExpenseType":"2","customerNo":"411805170138410133","subBusinessType":"1","reason":"采购单付款信息","thirdPayNo":"","thirdBusNo":"1176036385115615232 ","amount":null,"settlementNo":"","paymentAccount":"","receivableAccount":"","isWithHold":"false","payNo":"","pnr":"","transationOrderNo":"","saleOrderNo":"","specialType":null} 
+- setCertificate 保存certificate：Certificate:{ "certificateNo":"1176043951015124992","owner":"8755","businessType":"2","incomeExpenseType":"2","subBusinessType":"1","payType":"3","payWay":"1000001","customerTypeNo":"104","customerNo":"411805170138410133","capitalAccountNo":"809683098651348992","amount":"0","auditStatus":"1","reason":"采购单付款信息","settlementNo":"","settlementStatus":"0","payNo":"","thirdPayNo":"","thirdBusNo":"1176036385115615232 ","payAmount":null,"billsNumber":"","modifier":"admin","createTime":"Mon Sep 23 16:01:50 CST 2019","modifyTime":null,"actualStatus":"0","valid":"1","ticketnos":"","specialType":"0","pnr":"","transationOrderNo":"","saleOrderNo":"","actualAmountRecordList":"[]"} 
+ # 创建收款单
+Time：198 ms - ID：com.tempus.gss.order.dao.CertificateMapper.insertSelective
+EXECUTE SQL：INSERT INTO OS_CERTIFICATE (
+	certificate_no,#收付款单号，新创建的
+	OWNER,#数据归属单位
+	business_type,#业务类型 1 销售 2 为采购
+	income_expense_type,#收支类型 1 收，2 为支
+	sub_business_type,#业务小类 1 销采，2 补收退，3 废退，4 变更，5 错误修改
+	pay_type,#支付类型 1在线支付 2帐期或代付 3线下支付
+	pay_way,# 支付方式
+	customer_type_no,#客户类型
+	customer_no,#客户编号
+	capital_account_no,#收付资金账号 存在时记录
+	amount,#收（付）金额
+	audit_status,#审核状态 1 待审核 2 已审核
+	reason,#补充说明
+	settlement_no,# 结算周期编号
+	settlement_status,#结算状态 0，未结算，1 已结算，2 已审核
+	third_bus_no,#第三方业务编号
+	modifier,
+	create_time,
+	actual_status,
+	valid,
+	special_type
+)
+VALUES
+	(
+		1176043951015124992,#收付款单号，新创建的
+		8755,#数据归属单位
+		2,#业务类型 1 销售 2 为采购
+		2,#收支类型 1 收，2 为支
+		1,#业务小类 1 销采，2 补收退，3 废退，4 变更，5 错误修改
+		3,#支付类型 1在线支付 2帐期或代付 3线下支付
+		1000001,# 支付方式
+		104,#客户类型
+		411805170138410133,#客户编号
+		'809683098651348992',#收付资金账号 存在时记录
+		0,#收（付）金额
+		1,#审核状态 1 待审核 2 已审核
+		'采购单付款信息', #补充说明
+		'',# 结算周期编号
+		0, #结算状态 0，未结算，1 已结算，2 已审核
+		'1176036385115615232 ', #第三方业务编号
+		'admin', #操作人 默认为：sys
+		'2019-09-23 16:01:50',
+		0,#实收状态  0 未实付 1 已实付 2 部分已支付
+		1,#删除标志 0 无效/已删除 1 有效
+		0#特殊含义
+	)
+
+# 创建实付记录
+ Time：165 ms - ID：com.tempus.gss.order.dao.ActualAmountRecorMapper.insert
+EXECUTE SQL：INSERT INTO OS_ACTUALAMOUNTRECORD (
+	OWNER,
+	record_no,
+	certificate_no,
+	business_type,
+	pay_type,
+	income_expense_type,
+	goods_type,
+	goods_sub_type,
+	goods_name,
+	actual_amount,
+	audit_status,
+	actual_status,
+	moving_reason,
+	settlement_no,
+	pay_no,
+	settlement_status,
+	modifier,
+	create_time,
+	modify_time,
+	arrive_account_time,
+	valid,
+	refund_amount
+)
+VALUES
+	(
+		8755,
+		1176066187197427712,
+		1176071199462055936,
+		3,
+		3,
+		2,
+		2,
+		2,
+		'EWR-CLT-LAX',
+		2530.00,#actual_amount,
+		1,#audit_status,
+		0,#actual_status,
+		NULL,
+		NULL,
+		NULL,pay_no,
+		0,
+		'admin',
+		'2019-09-23 17:52:46',
+		NULL,
+		NULL,
+		1,
+		0
+	)
+#//调用线下支付服务  线下支付怎么确定是否支付成功？根据是否 成功插入交易流水？
+/**当支付类型为采购时，不需要审核*/
+#//业务类型 1.销售 2.为采购 3.账单还款 4.充值
+- 开始调用offLinePay。。。。。。 
+- com.tempus.gss.pay.entity.vo.OffLinePayRequest@5e264039[payInfoNo=<null>,payWayCode=1000001,channel=BUY,serviceLine=1,cusId=411805170138410133,orderNo=1176043951015124992,amount=0.00,isAudit=false,paymentAccount=<null>,receivableAccount=<null>,threeTradeNo=<null>,operator=<null>,callBackUrl=<null>,custRemark=<null>,transationOrderNo=<null>,saleOrderNo=<null>,pnr=<null>,productType=<null>,payWay=<null>] 
+- 线下支付请求：OffLinePayRequest [payInfoNo=null, payWayCode=1000001, channel=BUY, serviceLine=1, cusId=411805170138410133, orderNo=1176043951015124992, amount=0.00, isAudit=false, paymentAccount=null, receivableAccount=null, threeTradeNo=null, operator=null, callBackUrl=null, custRemark=null, transationOrderNo=null, saleOrderNo=null, pnr=null, productType=null, payWay=null], com.tempus.gss.vo.Agent@e9e2f1e[owner=8755,type=<null>,num=<null>,id=1,account=admin,token=,ip=172.16.51.69,device=OP,enterpriseNo=<null>,telephone=<null>,seat=<null>] 
+ #查询支付方式
+Time：10 ms - ID：com.tempus.gss.pay.dao.PayWayMapper.selectOne
+ Execute SQL：SELECT id,code AS code,name AS name,pay_category_code AS payCategoryCode,sort AS sort,preset AS preset,image_data_url AS imageDataUrl,valid AS valid,creator AS creator,create_time AS createTime,modifier AS modifier,modify_time AS modifyTime,owner AS owner,status AS status FROM PS_PAY_WAY WHERE code=1000001 AND valid=true AND owner=8755
+#// 判断订单是否存在
+ Time：108 ms - ID：com.tempus.gss.pay.dao.AllPayInfoMapper.selectOne
+ Execute SQL：SELECT id,all_pay_info_no AS allPayInfoNo,cust_user_no AS custUserNo,cust_user_account_no AS custUserAccountNo,cust_channel AS custChannel,service_line AS serviceLine,order_no AS orderNo,order_type AS orderType,pay_category_code AS payCategoryCode,pay_way_code AS payWayCode,three_interface_set_no AS threeInterfaceSetNo,amount AS amount,real_amount AS realAmount,plat_rate AS platRate,three_rate AS threeRate,plat_fare AS platFare,three_fare AS threeFare,three_trade_no AS threeTradeNo,old_all_pay_info_no AS oldAllPayInfoNo,old_three_trade_no AS oldThreeTradeNo,trade_type AS tradeType,trade_status AS tradeStatus,audit_status AS auditStatus,mark AS mark,submit_info AS submitInfo,calback_info AS calbackInfo,payment_account AS paymentAccount,payment_account_name AS paymentAccountName,receivable_account AS receivableAccount,receivable_account_name AS receivableAccountName,before_balance AS beforeBalance,after_balance AS afterBalance,cust_remark AS custRemark,audit_remark AS auditRemark,payment_ip AS paymentIp,payment_address AS paymentAddress,payment_time AS paymentTime,creator AS creator,create_time AS createTime,auditor AS auditor,audit_time AS auditTime,completer AS completer,complete_time AS completeTime,owner AS owner,operator AS operator,operator_tel AS operatorTel,call_back_url AS callBackUrl,transation_order_no AS transationOrderNo,sale_order_no AS saleOrderNo,pnr AS pnr,notify_time AS notifyTime,transation_certificate_url AS transationCertificateUrl,payment_type AS paymentType,payback_amount AS paybackAmount,receive_time AS receiveTime,product_type AS productType,pay_way AS payWay FROM PS_ALL_PAY_INFO WHERE order_no=1176043951015124992 AND trade_status=1 AND owner=8755
+# 创建 交易流水对象
+- 线下支付响应：OffLinePayResponse [code=0000, message=交易成功, payStatus=1, paymentAccount=null, receivableAccount=null, payNo=1176044041477873664, thirdPayNo=null] 
+ Time：3 ms - ID：com.tempus.gss.pay.dao.AllPayInfoMapper.insertSelective
+EXECUTE SQL：INSERT INTO PS_ALL_PAY_INFO (
+	all_pay_info_no,#新生成的
+	cust_user_no,
+	cust_user_account_no,
+	cust_channel,
+	service_line,
+	order_no,
+	order_type,
+	pay_category_code,
+	pay_way_code,
+	amount,
+	real_amount,
+	plat_rate,
+	three_rate,
+	plat_fare,
+	three_fare,
+	trade_type,#/ 交易类型1充值2支付3退款
+	trade_status,
+	audit_status,
+	creator,
+	create_time,
+	OWNER
+)
+VALUES
+	(
+		1176044041477873664,
+		411805170138410133,
+		0,
+		'BUY',
+		'1',
+		1176043951015124992,
+		1,
+		1000,
+		1000001,
+		0.00,
+		0.00,
+		0,
+		0,
+		0,
+		0,
+		2,#/ 交易类型1充值2支付3退款
+		1,#trade_status,
+		0,#audit_status,
+		'admin',
+		'2019-09-23 16:02:03',
+		8755
+	)
+- 调用线下支付服务结果：com.tempus.gss.pay.entity.vo.OffLinePayResponse@297a9150[code=0000,message=交易成功,payStatus=1,paymentAccount=<null>,receivableAccount=<null>,payNo=1176044041477873664,thirdPayNo=<null>] 
+- 调用支付结果通知服务payReceive开始--->参数为：PayReceiveVO [certificateNo=1176043951015124992, payStatus=1, amount=0, payWay=1000001, payNo=1176044041477873664, thirdPayNo=null, paymentAccount=null, receivableAccount=null, reason=采购单付款信息] 
+#查询包括valid=0的所有记录，可能存在回传延迟，导致本该支付成功的记录被覆盖掉 
+Time：4 ms - ID：com.tempus.gss.order.dao.CertificateMapper.selectByCertificateNoAll
+ Execute SQL：SELECT * FROM OS_CERTIFICATE WHERE CERTIFICATE_NO = 1176043951015124992
+# 更新 收付款单信息
+ Time：2 ms - ID：com.tempus.gss.order.dao.CertificateMapper.updateByPrimaryKeySelective
+EXECUTE SQL：update OS_CERTIFICATE
+SET PAY_WAY = 1000001,
+ PAY_NO = '1176044041477873664',#内部支付流水 挂帐时返回 挂帐单号，部分支付时多个用“,”隔开',
+ PAY_AMOUNT = 0,#已支付金额
+ ACTUAL_STATUS = 1,#实收状态 默认为 0.未实付 1.已实付 对线上和线下的 当状态为已审核时不是已实付。对挂帐的 在对挂账处理还款和付款时确定实付状态',
+ VALID = 1
+WHERE
+	CERTIFICATE_NO = 1176043951015124992 
+
+# 更新实付记录 
+- 发送通知--更新收付款单：为Certificate:{ "certificateNo":"1176043951015124992","owner":null,"businessType":null,"incomeExpenseType":null,"subBusinessType":null,"payType":null,"payWay":"1000001","customerTypeNo":null,"customerNo":null,"capitalAccountNo":"","amount":null,"auditStatus":null,"reason":"","settlementNo":"","settlementStatus":null,"payNo":"1176044041477873664","thirdPayNo":"","thirdBusNo":"","payAmount":"0","billsNumber":"","modifier":"","createTime":null,"modifyTime":null,"actualStatus":"1","valid":"1","ticketnos":"","specialType":null,"pnr":"","transationOrderNo":"","saleOrderNo":"","actualAmountRecordList":"[]"} 
+ Time：1 ms - ID：com.tempus.gss.order.dao.ActualAmountRecorMapper.updateActualAmountRecord
+EXECUTE SQL：UPDATE OS_ACTUALAMOUNTRECORD
+SET ACTUAL_STATUS = 1,#'实收状态 默认为 0 未实付 1 已实付 对线上和线下的 当状态为已审核时不是已实付。对挂帐的 在对挂账处理还款和付款时确定实付状态',
+ PAY_NO = '1176044041477873664',#'内部支付流水号 挂帐 在实际支付后回写 ',
+ MODIFY_TIME = '2019-09-23 16:02:03',
+ VALID = 1
+WHERE
+	CERTIFICATE_NO = 1176043951015124992 
+
+# 根据 certificateNo 查询所有 实付记录
+ Time：3 ms - ID：com.tempus.gss.order.dao.ActualAmountRecorMapper.queryListBycertificateNo
+ Execute SQL：SELECT ID,OWNER,RECORD_NO as recordNo,CERTIFICATE_NO as certificateNo,BUSINESS_TYPE as businessType, INCOME_EXPENSE_TYPE as incomeExpenseType,GOODS_TYPE as goodsType,PAY_TYPE as payType, GOODS_SUB_TYPE as goodsSubType,GOODS_NAME as goodsName,ACTUAL_AMOUNT as actualAmount, AUDIT_STATUS as auditStatus,ACTUAL_STATUS as actualStatus,MOVING_REASON as movingReason, SETTLEMENT_NO as settlementNo,PAY_NO as payNo,SETTLEMENT_STATUS as settlementStatus, REFUND_AMOUNT as refundAmount,MODIFIER, CREATE_TIME as createTime,MODIFY_TIME as modifyTime,ARRIVE_ACCOUNT_TIME as arriveAccountTime,VALID FROM OS_ACTUALAMOUNTRECORD WHERE VALID=1 AND CERTIFICATE_NO = 1176043951015124992
+
+ - 调用审核收付款单服务开始--->审核状态为：1 ,收付款单号为： 
+ Time：4 ms - ID：com.tempus.gss.order.dao.CertificateMapper.selectByCertificateNo
+ Execute SQL：SELECT C.* FROM ( SELECT T.OWNER, T.CERTIFICATE_NO, T.BUSINESS_TYPE, T.INCOME_EXPENSE_TYPE, T.SUB_BUSINESS_TYPE, T.PAY_TYPE, T.PAY_WAY, T.CUSTOMER_TYPE_NO, T.CUSTOMER_NO, T.CAPITAL_ACCOUNT_NO, T.AMOUNT, T.AUDIT_STATUS, T.REASON, T.SETTLEMENT_NO, T.SETTLEMENT_STATUS, T.PAY_NO, T.THIRD_PAY_NO, T.THIRD_BUS_NO, T.MODIFIER, T.MODIFY_TIME, T.CREATE_TIME, T.ACTUAL_STATUS, T.SPECIAL_TYPE, T.VALID, S.ID, S.OWNER as AAR_OWNER, S.RECORD_NO, S.CERTIFICATE_NO AS AAR_CERTIFICATE_NO, S.BUSINESS_TYPE AS AAR_BUSINESS_TYPE, S.INCOME_EXPENSE_TYPE AS AAR_INCOME_EXPENSE_TYPE, S.GOODS_TYPE AS AAR_GOODS_TYPE, S.GOODS_SUB_TYPE AS AAR_GOODS_SUB_TYPE, S.GOODS_NAME AS AAR_GOODS_NAME, S.ACTUAL_AMOUNT, S.ACTUAL_STATUS AS AAR_ACTUAL_STATUS, S.AUDIT_STATUS AS AAR_AUDIT_STATUS, S.MOVING_REASON, S.SETTLEMENT_STATUS AS AAR_SETTLEMENT_STATUS, S.SETTLEMENT_NO AS AAR_SETTLEMENT_NO, S.PAY_NO AS AAR_PAY_NO, S.MODIFIER AS AAR_MODIFIER, S.ARRIVE_ACCOUNT_TIME, S.VALID AS AAR_VALID, S.CREATE_TIME AS AAR_CREATE_TIME, S.MODIFY_TIME AS AAR_MODIFY_TIME FROM OS_CERTIFICATE T LEFT JOIN OS_ACTUALAMOUNTRECORD S ON S.CERTIFICATE_NO = T.CERTIFICATE_NO ) C WHERE VALID=1 AND CERTIFICATE_NO = 1176043951015124992
+# 更新 OS_CERTIFICATE 状态
+ Time：1 ms - ID：com.tempus.gss.order.dao.CertificateMapper.updateByPrimaryKeySelective
+EXECUTE SQL：update OS_CERTIFICATE
+SET AUDIT_STATUS = 2,#'审核状态 1 待审核 2 已审核 3 部分已审核',
+ ACTUAL_STATUS = 1
+WHERE
+	CERTIFICATE_NO = 1176043951015124992
+
+
+- 审核收付款单--->更新c表：Certificate:{ "certificateNo":"1176043951015124992","owner":null,"businessType":null,"incomeExpenseType":null,"subBusinessType":null,"payType":null,"payWay":null,"customerTypeNo":null,"customerNo":null,"capitalAccountNo":"","amount":null,"auditStatus":"2","reason":"","settlementNo":"","settlementStatus":null,"payNo":"","thirdPayNo":"","thirdBusNo":"","payAmount":null,"billsNumber":"","modifier":"","createTime":null,"modifyTime":null,"actualStatus":"1","valid":null,"ticketnos":"","specialType":null,"pnr":"","transationOrderNo":"","saleOrderNo":"","actualAmountRecordList":"[]"} 
+# 更新实付记录 已审核，已实付
+ Time：1 ms - ID：com.tempus.gss.order.dao.ActualAmountRecorMapper.updateActualAmountRecord
+EXECUTE SQL：UPDATE OS_ACTUALAMOUNTRECORD
+SET AUDIT_STATUS = 2,
+ ACTUAL_STATUS = 1
+WHERE
+	CERTIFICATE_NO = 1176043951015124992
+
+- 审核收付款单--->更新a表：ActualAmountRecord [id=null, owner=null, recordNo=null, certificateNo=null, businessType=null, payType=null, incomeExpenseType=null, goodsType=null, goodsSubType=null, goodsName=null, actualAmount=null, auditStatus=2, actualStatus=1, movingReason=null, settlementNo=null, payNo=null, settlementStatus=null, modifier=null, createTime=null, modifyTime=null, arriveAccountTime=null, valid=null, refundAmount=null, payWay=null, capitalAccountNo=null，payWayName=null] 
+ Time：2 ms - ID：com.tempus.gss.order.dao.ActualAmountRecorMapper.queryListBycertificateNo
+ Execute SQL：SELECT ID,OWNER,RECORD_NO as recordNo,CERTIFICATE_NO as certificateNo,BUSINESS_TYPE as businessType, INCOME_EXPENSE_TYPE as incomeExpenseType,GOODS_TYPE as goodsType,PAY_TYPE as payType, GOODS_SUB_TYPE as goodsSubType,GOODS_NAME as goodsName,ACTUAL_AMOUNT as actualAmount, AUDIT_STATUS as auditStatus,ACTUAL_STATUS as actualStatus,MOVING_REASON as movingReason, SETTLEMENT_NO as settlementNo,PAY_NO as payNo,SETTLEMENT_STATUS as settlementStatus, REFUND_AMOUNT as refundAmount,MODIFIER, CREATE_TIME as createTime,MODIFY_TIME as modifyTime,ARRIVE_ACCOUNT_TIME as arriveAccountTime,VALID FROM OS_ACTUALAMOUNTRECORD WHERE VALID=1 AND CERTIFICATE_NO = 1176043951015124992
+
+ Time：25 ms - ID：com.tempus.gss.product.ift.dao.SaleOrderExtDao.selectByPrimaryKey
+ Execute SQL：select SALE_ORDER_NO, ID, OWNER, DEMAND_NO, LEG_TYPE, CONTACT_NAME, CONTACT_PHONE, CONTACT_MOBILE, CONTACT_MAIL, SALE_REMARK,CUSTOMER_REMARK, VALID, VERSION, LOCKER, LOCK_TIME, CREATE_TYPE, CREATE_TIME, MODIFY_TIME, CREATOR, MODIFIER, ISSUE_TIME, ORIGINAL_ORDER_NO, LINKNO, LINKTYPE, CURRENCY, SALE_CURRENCY,EXCHANGE_RATE,DRAWER_LOGIN_NAME,OFFICE,ALONE_LOCKER,IS_CIVIL_ORDER,BOOK_PERSONER_NAME, OUT_BOOK_ORDER_NO,ORDER_TYPE,IFNULL(`IS_AUTO_DISTRIBUTE`,0) as IS_AUTO_DISTRIBUTE,TEAM_ORDER_NO from IFT_SALE_ORDER_EXT where SALE_ORDER_NO = 1176036384889122816 AND VALID=1
+# 插入 订单PNR
+ Time：2 ms - ID：com.tempus.gss.product.ift.dao.PnrDao.insertSelective
+EXECUTE SQL：insert INTO IFT_PNR (
+	PNR_NO,
+	OWNER,
+	SOURCE_NO,
+	PNR,
+	VALID,
+	CREATE_TIME,
+	CREATOR
+)
+VALUES
+	(
+		1176043982468165632,
+		8755,
+		1176036384889122816,
+		'fef543',
+		1,
+		'2019-09-23 16:02:06',
+		'admin'
+	)
+
+ Time：21 ms - ID：com.tempus.gss.product.ift.dao.SaleOrderDetailDao.selectBySaleOrderNo
+ Execute SQL：select SALE_ORDER_DETAIL_NO, ID,CABIN, OWNER,TICKET_NO, SALE_ORDER_NO, PASSENGER_NO, LEG_NO, FARE, TAX, BROKERAGE, AGENCY_FEE, REBATE, AWARD_PRICE, PARENT_SECTION, CHILD_SECTION, IS_CHANGE, MODIFIER, MODIFY_TIME, CREATOR, CREATE_TIME, STATUS, VALID, REFUSE_REASON,DEPT_PROFIT,PROFIT from IFT_SALE_ORDER_DETAIL where SALE_ORDER_NO = 1176036384889122816
+
+
+[?.()] - 出票更新乘客信息Passenger{passengerNo=1176036385044312064, owner=null, historyPassenger='null', id=null, saleOrderNo=1176036384889122816, passengerType='null', surname='null', name='null', certType='null', certNo='null', certValid=null, passengerBirth=null, nationality='null', gender='null', ticketConfig='null', ticketAirline='null', ticketType='null', buyFare=2210.00, buyTax=320.00, buyBrokerage=0.00, buyAgencyFee=0.00, buyRebate=0.00, buyAwardPrice=2210.00, buyPrice=2530.00, saleFare=null, saleTax=null, saleBrokerage=null, saleAgencyFee=null, saleRebate=null, saleAwardPrice=null, serviceCharge=null, salePrice=null, modifier='null', status='null', modifyTime=null, valid=null, createTime=null, creator='null', ticketNo='null', phone='null', policyNo=0, deptProfit=null, profit=null, buyCurrency='CNY', buyExchangeRate=1.00, civilValidateType='null', validateContent='null'} 
+ # 更新乘客信息 
+Time：1 ms - ID：com.tempus.gss.product.ift.dao.PassengerDao.updateByPrimaryKeySelective
+EXECUTE SQL：update IFT_PASSENGER
+SET SALE_ORDER_NO = 1176036384889122816,
+ BUY_FARE = 2210.00,
+ BUY_TAX = 320.00,
+ BUY_BROKERAGE = 0.00,
+ BUY_AGENCY_FEE = 0.00,
+ BUY_REBATE = 0.00,
+ BUY_AWARD_PRICE = 2210.00,
+ BUY_PRICE = 2530.00,
+ POLICY_NO = 0,
+ BUY_CURRENCY = 'CNY',
+ BUY_EXCHANGE_RATE = 1.00
+WHERE
+	PASSENGER_NO = 1176036385044312064
+# 更新 国际销售详情信息
+ Time：2 ms - ID：com.tempus.gss.product.ift.dao.SaleOrderDetailDao.updateByPrimaryKeySelective
+EXECUTE SQL：update IFT_SALE_ORDER_DETAIL
+SET ID = 27357,
+ OWNER = 8755,
+ SALE_ORDER_NO = 1176036384889122816,
+ PASSENGER_NO = 1176036385044312064,
+ CABIN = 'L',
+ LEG_NO = 1176036384901705728,
+ FARE = 2210.0000,
+ TAX = 320.0000,
+ BROKERAGE = 0.0000,
+ AGENCY_FEE = 0.0000,
+ REBATE = 0.0000,
+ AWARD_PRICE = 2210.0000,
+ TICKET_NO = '113-1236547478',#更新票号
+ IS_CHANGE = FALSE,
+ CREATOR = 'admin',
+ CREATE_TIME = '2019-09-23 15:31:54',
+ STATUS = '4',# 更新为已出票
+ VALID = 1,
+ DEPT_PROFIT = 0.00,
+ PROFIT = 0.00
+WHERE
+	SALE_ORDER_DETAIL_NO = 1176036385543434240
+
+# 更新 国际销售详情信息 2
+ - 乘客[1176036385044312064]的票号写入成功,对应航程为:EWRCLT/ 
+ Time：3 ms - ID：com.tempus.gss.product.ift.dao.SaleOrderDetailDao.updateByPrimaryKeySelective
+ Execute SQL：update IFT_SALE_ORDER_DETAIL SET ID = 27358, OWNER = 8755, SALE_ORDER_NO = 1176036384889122816, PASSENGER_NO = 1176036385044312064, CABIN = 'L', LEG_NO = 1176036384989786112, FARE = 2210.0000, TAX = 320.0000, BROKERAGE = 0.0000, AGENCY_FEE = 0.0000, REBATE = 0.0000, AWARD_PRICE = 2210.0000, TICKET_NO = '113-1336547478', IS_CHANGE = false, CREATOR = 'admin', CREATE_TIME = '2019-09-23 15:31:54', STATUS = '4', VALID = 1, DEPT_PROFIT = 0.00, PROFIT = 0.00 where SALE_ORDER_DETAIL_NO = 1176036385593765888
+
+ - 乘客[1176036385044312064]的票号写入成功,对应航程为:CLTLAX/ 
+- 采购单update() 参数：BuyOrder [buyOrderNo=1176036385115615232, owner=8755, saleOrderNo=1176036384889122816, bsignType=1, businessSignNo=1176036453520564224, buyChannelNo=OP, deptCode=69, supplierTypeNo=104, supplierNo=411805170138410133, supplierName=null, buyChangeType=0:0:0, goodsType=2, goodsSubType=2, goodsName=EWR-CLT-LAX, buyer=sys, pcount=null, payable=2530.00, payment=2530.00, saleorderPrice=0.00, buyingTime=Mon Sep 23 15:31:54 CST 2019, payStatus=3, buyStatus=4, buyChildStatus=3, modifyTime=Mon Sep 23 15:31:44 CST 2019, modifier=admin, valid=1, haveDifference=null, differenceTotalAmount=null, transationOrderNo=1176036453017247744, ticketNos=null] 
+ Time：7 ms - ID：com.tempus.gss.order.dao.BuyOrderExtendMapper.selectOne
+ Execute SQL：SELECT BUY_ORDER_NO AS buyOrderNo,external_number AS externalNumber,settlement_status AS settlementStatus,match_status AS matchStatus,check_way AS checkWay,check_result AS checkResult,clearance_status AS clearanceStatus,certificate_no AS certificateNo,pay_way AS payWay,third_pay_no AS thirdPayNo,third_bus_no AS thirdBusNo,third_amount AS thirdAmount,profit AS profit,clearance_amount AS clearanceAmount,supplier_type_name AS supplierTypeName,supplier_no_name AS supplierNoName,TICKETNOS AS ticketNos FROM OS_BUYORDER_EXTEND WHERE BUY_ORDER_NO=1176036385115615232
+# 更新采购单
+ Time：2 ms - ID：com.tempus.gss.order.dao.BuyOrderMapper.updateSelectiveById
+EXECUTE SQL：UPDATE OS_BUYORDER
+SET OWNER = 8755,
+ sale_order_no = 1176036384889122816,
+ bsign_type = 1,
+ business_sign_no = 1176036453520564224,
+ buy_channel_no = 'OP',
+ dept_code = '69',
+ supplier_type_no = 104,
+ supplier_no = 411805170138410133,
+ buy_change_type = '0:0:0',
+ goods_type = 2,
+ goods_sub_type = 2,
+ goods_name = 'EWR-CLT-LAX',
+ buyer = 'sys',
+ payable = 2530.00,
+ payment = 2530.00,
+ saleorder_price = 0.00,
+ buying_time = '2019-09-23 15:31:54',
+ pay_status = 3,# 更新 已支付
+ buy_status = 5,# 更新  ？
+ buy_child_status = 3,# 更新  ？
+ modify_time = '2019-09-23 15:31:44',
+ modifier = 'admin',
+ valid = 1,
+ transation_order_no = 1176036453017247744
+WHERE
+	BUY_ORDER_NO = 1176036385115615232
+
+
+ Time：2 ms - ID：com.tempus.gss.order.dao.BuyOrderMapper.selectById
+ Execute SQL：SELECT BUY_ORDER_NO AS buyOrderNo,owner AS owner,sale_order_no AS saleOrderNo,bsign_type AS bsignType,business_sign_no AS businessSignNo,buy_channel_no AS buyChannelNo,dept_code AS deptCode,supplier_type_no AS supplierTypeNo,supplier_no AS supplierNo,buy_change_type AS buyChangeType,goods_type AS goodsType,goods_sub_type AS goodsSubType,goods_name AS goodsName,buyer AS buyer,pcount AS pcount,payable AS payable,payment AS payment,saleorder_price AS saleorderPrice,buying_time AS buyingTime,pay_status AS payStatus,buy_status AS buyStatus,buy_child_status AS buyChildStatus,modify_time AS modifyTime,modifier AS modifier,valid AS valid,have_difference AS haveDifference,difference_total_amount AS differenceTotalAmount,transation_order_no AS transationOrderNo FROM OS_BUYORDER WHERE BUY_ORDER_NO=1176036385115615232
+
+ Time：5 ms - ID：com.tempus.gss.product.ift.dao.BuyOrderExtDao.selectByPrimaryKey
+ Execute SQL：select BUY_ORDER_NO, ID, OWNER, PNR_NO, AIRLINE, TICKET_TYPE, CREATOR, CREATE_TIME, MODIFIER, MODIFY_TIME, VALID, STATUS,SUPPLIER_TYPE_NO,SUPPLIER_NO,BUY_REMARKE,OFFICE,BUY_LOCKER from IFT_BUY_ORDER_EXT where BUY_ORDER_NO=1176036385115615232 AND VALID=1
+# 更新国际采购扩展
+- 出票更新采购扩展表BuyOrderExt{buyOrderNo=1176036385115615232, buyOrder=null, id=8345, owner=8755, airline='AA', ticketType='null', creator='admin', createTime=Mon Sep 23 15:31:54 CST 2019, modifier='null', modifyTime=null, valid=1, status='null', policyNo=null, priceSpecNo=null, pnrNo=null, supplierNo=411805170138410133, supplierTypeNo=104, importPnr=null, buyOrderDetailList=[com.tempus.gss.product.ift.api.entity.BuyOrderDetail@1393adaf, com.tempus.gss.product.ift.api.entity.BuyOrderDetail@42886a6b], saleOrderNo=null, changeOrderNo=null, office='null', buyRemarke=''} 
+ Time：2 ms - ID：com.tempus.gss.product.ift.dao.BuyOrderExtDao.updateByPrimaryKeySelective
+EXECUTE SQL：update IFT_BUY_ORDER_EXT
+SET ID = 8345,
+ OWNER = 8755,
+ AIRLINE = 'AA',
+ CREATOR = 'admin',
+ CREATE_TIME = '2019-09-23 15:31:54',
+ VALID = 1,
+ SUPPLIER_TYPE_NO = 104,#更新
+ SUPPLIER_NO = 411805170138410133,# 更新
+ BUY_REMARKE = '',
+ BUY_LOCKER = 1 # 更新
+WHERE
+	BUY_ORDER_NO = 1176036385115615232
+[2019-09-23 16:02:11.664][INFO ][http-nio-8479-exec-4][com.tempus.gss.order.service.SaleOrderServiceImpl][?.()] - 销售单updateStatus()参数--> saleOrderNo:1176036384889122816,childStatus:4 
+ Time：3 ms - ID：com.tempus.gss.order.dao.SaleOrderMapper.selectById
+ Execute SQL：SELECT SALE_ORDER_NO AS saleOrderNo,external_number AS externalNumber,owner AS owner,transation_order_no AS transationOrderNo,business_sign_no AS businessSignNo,dept_code AS deptCode,order_type AS orderType,source_channel_no AS sourceChannelNo,customer_type_no AS customerTypeNo,customer_no AS customerNo,ordering_login_name AS orderingLoginName,main_order_no AS mainOrderNo,attached_type AS attachedType,order_change_type AS orderChangeType,goods_type AS goodsType,goods_sub_type AS goodsSubType,goods_name AS goodsName,pcount AS pcount,amount AS amount,discount_amount AS discountAmount,receivable AS receivable,received AS received,buyorder_price AS buyorderPrice,ordering_time AS orderingTime,pay_status AS payStatus,order_status AS orderStatus,order_child_status AS orderChildStatus,modify_time AS modifyTime,actor_user AS actorUser,modifier AS modifier,valid AS valid,bsign_type AS bsignType,have_difference AS haveDifference,difference_total_amount AS differenceTotalAmount,isviolation AS isviolation,violation AS violation FROM OS_SALEORDER WHERE SALE_ORDER_NO=1176036384889122816
+# 更新销售单
+ Time：2 ms - ID：com.tempus.gss.order.dao.SaleOrderMapper.updateSelectiveById
+EXECUTE SQL：UPDATE OS_SALEORDER
+SET OWNER = 8755,
+ dept_code = '69',
+ order_status = 5,
+ order_child_status = 4,# 更新为 已出票
+ modifier = 'admin'
+WHERE
+	SALE_ORDER_NO = 1176036384889122816
+ Time：3 ms - ID：com.tempus.gss.order.dao.SaleOrderMapper.selectById
+ Execute SQL：SELECT SALE_ORDER_NO AS saleOrderNo,external_number AS externalNumber,owner AS owner,transation_order_no AS transationOrderNo,business_sign_no AS businessSignNo,dept_code AS deptCode,order_type AS orderType,source_channel_no AS sourceChannelNo,customer_type_no AS customerTypeNo,customer_no AS customerNo,ordering_login_name AS orderingLoginName,main_order_no AS mainOrderNo,attached_type AS attachedType,order_change_type AS orderChangeType,goods_type AS goodsType,goods_sub_type AS goodsSubType,goods_name AS goodsName,pcount AS pcount,amount AS amount,discount_amount AS discountAmount,receivable AS receivable,received AS received,buyorder_price AS buyorderPrice,ordering_time AS orderingTime,pay_status AS payStatus,order_status AS orderStatus,order_child_status AS orderChildStatus,modify_time AS modifyTime,actor_user AS actorUser,modifier AS modifier,valid AS valid,bsign_type AS bsignType,have_difference AS haveDifference,difference_total_amount AS differenceTotalAmount,isviolation AS isviolation,violation AS violation FROM OS_SALEORDER WHERE SALE_ORDER_NO=1176036384889122816
+# 更新国际销售扩展单
+ Time：4 ms - ID：com.tempus.gss.product.ift.dao.SaleOrderExtDao.updateByPrimaryKeySelective
+EXECUTE SQL：update IFT_SALE_ORDER_EXT
+SET ID = 8344,
+ OWNER = 8755,
+ PNR_NO = 1176043982468165632,#更新
+ LEG_TYPE = 1,
+ CONTACT_NAME = 'tudou123',
+ CONTACT_PHONE = '',
+ CONTACT_MOBILE = '18923880699',
+ SALE_REMARK = '',
+ VALID = 1,
+ VERSION = 1,
+ LOCKER = 1,
+ CREATE_TYPE = 2,
+ CREATE_TIME = '2019-09-23 15:31:54',
+ CREATOR = 'admin',
+ MODIFIER = 'admin',
+ ISSUE_TIME = '2019-09-23 16:02:06',#更新
+ LINKTYPE = 1,
+ SALE_CURRENCY = 'CNY',
+ DRAWER_LOGIN_NAME = 'admin',
+ EXCHANGE_RATE = 1.00,
+ OFFICE = '',
+ ALONE_LOCKER = 1
+WHERE
+	SALE_ORDER_NO = 1176036384889122816
+ - saleOrderExtDao.updateByPrimaryKeySelective(saleOrderExt):result=1 
+ - 国际机票出票通知--->发送MQ消息：com.tempus.gss.product.ift.api.entity.vo.IftTicketMessage@7575471f[owner=8755,tradeNo=1176036453017247744] 
+ - 出单操作成功 
+ - 出单结束 
+ - 更新lockerID：1,出票员,值更新开始. 
+ Time：3 ms - ID：com.tempus.gss.product.ift.dao.TicketSenderDao.queryByLoginId
+ Execute SQL：SELECT `ID`,`USERID`,`NAME`,`STATUS`,`NO`,`CREATOR`,`MODIFIER`, `CREATEDATETIME`,`UPDATETIME`,`ORDERCOUNT`,`POINT`,`SEQUENCENO`,IFNULL(`SALE_WASTE_PENDDING_NUM`,0) as `SALE_WASTE_PENDDING_NUM`,IFNULL(`BUY_WASTE_PENDDING_NUM`,0) as `BUY_WASTE_PENDDING_NUM`, `TYPE`,`SALE_ORDER_NUM`,`BUY_CHANGE_NUM`,`SALE_CHANGE_NUM`,`BUY_REFUSE_NUM`, `SALE_REFUSE_NUM`,(`BUY_CHANGE_NUM`+`SALE_CHANGE_NUM`) as `TOTAL_CHANGE_NUM`, (`SALE_REFUSE_NUM`+`BUY_REFUSE_NUM`) as `TOTAL_REFUSE_NUM`,(`SALE_WASTE_PENDDING_NUM`+`BUY_WASTE_PENDDING_NUM`) as `TOTAL_WASTE_NUM`,`SALE_ORDER_SEQ`,`SALE_CHANGE_SEQ`,`SALE_REFUND_SEQ`, `SALE_WASTE_SEQ`,`BUY_ORDER_SEQ`,`BUY_CHANGE_SEQ`,`BUY_REFUND_SEQ`,`BUY_WASTE_SEQ` FROM IFT_TICKETSENDER WHERE USERID='admin'
+
+[2019-09-23 16:02:12.712][INFO ][asynUpdateByLockerIdThread][com.tempus.gss.product.ift.service.TicketSenderServiceImpl][?.()] 
+- 更新lockerID:1,数量:0,type:ORDERCOUNT,值更新结束 
